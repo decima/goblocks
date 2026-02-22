@@ -19,7 +19,7 @@ func NewHomeController(app *app.App) *HomeController {
 
 func (c *HomeController) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		c.Error(w, "Not found", NotFound)
 		return
 	}
 

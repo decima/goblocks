@@ -19,6 +19,7 @@ type Config struct {
 func defaultConfig() {
 	viper.SetDefault("http.host", "0.0.0.0")
 	viper.SetDefault("http.port", 8000)
+	viper.SetDefault("blocks.storage.type", Fs)
 }
 
 type Http struct {
@@ -26,7 +27,17 @@ type Http struct {
 	Port int
 }
 
-type Blocks string
+type Blocks struct {
+	Storage struct {
+		Type StorageType
+		Path string
+	}
+}
+
+type StorageType string
+
+const Fs StorageType = "fs"
+const InMemory StorageType = "inMemory"
 
 func (h *Config) HttpHostAndPort() string {
 	return fmt.Sprintf("%s:%d", h.Http.Host, h.Http.Port)

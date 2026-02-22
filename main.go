@@ -42,21 +42,3 @@ func NewLogger() *slog.Logger {
 	}
 	return slog.New(slog.NewJSONHandler(os.Stdout, nil))
 }
-
-//mux := http.NewServeMux()
-//mux.HandleFunc("GET /hello/{name}", func(w http.ResponseWriter, r *http.Request) {
-//	io.WriteString(w, fmt.Sprintf("Hello %s", r.PathValue("name")))
-//})
-//
-//mux.HandleFunc("GET /demo/{any}", func(w http.ResponseWriter, r *http.Request) {
-//	io.WriteString(w, fmt.Sprintf("Hello Demo"))
-//})
-//
-//apiServer := &http.Server{
-//	Addr:           ":8000", // just informational since we created the listener ourselves
-//	Handler:        mux,
-//	ReadTimeout:    10 * time.Second,
-//	WriteTimeout:   10 * time.Second,
-//	MaxHeaderBytes: 16384,
-//}
-//log.Fatal(apiServer.ListenAndServe())

@@ -13,6 +13,10 @@ import (
 
 var Routes = fx.Module("router",
 	AsRoute(controllers.NewHomeController),
+	AsRoutes(
+		controllers.NewGetBlockController,
+		controllers.NewWriteBlockController,
+		controllers.NewDeleteBlockController),
 	fx.Provide(),
 )
 
@@ -42,6 +46,14 @@ func AsRoute(f any) fx.Option {
 	)
 }
 
+func AsRoutes(f ...any) fx.Option {
+	options := []fx.Option{}
+	for _, v := range f {
+		options = append(options, AsRoute(v))
+	}
+	return fx.Options(options...)
+}
+
 type Router struct {
 	logger   *slog.Logger
 	serveMux *http.ServeMux
@@ -68,13 +80,15 @@ func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if shouldPrintOutput && (buf.statusCode == 0 || buf.statusCode == http.StatusNotFound) {
-			controllers.Error(w, "Not found", controllers.NotFound)
-			shouldPrintOutput = false
+			if buf.buffer.Len() == 0 {
+				controllers.Error(w, "Not found", controllers.NotFound)
+				shouldPrintOutput = false
+			}
 		}
 
 		elapsed := float64(time.Since(start).Nanoseconds()) / 100000000
 		r.logger.Info(fmt.Sprintf(
-			"%v %v - %v - %v",
+			"%v %v %v %v",
 			req.Method,
 			req.URL.Path,
 			buf.statusCode,
@@ -82,6 +96,7 @@ func (r Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		),
 			"http.method", req.Method,
 			"http.path", req.URL.Path,
+			"http.pattern", req.Pattern,
 			"http.user-agent", req.UserAgent(),
 			"http.status", buf.statusCode,
 			"http.duration", elapsed,

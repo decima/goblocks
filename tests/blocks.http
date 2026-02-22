@@ -1,0 +1,33 @@
+### GET root block
+GET http://localhost:8000/blocks/ww
+
+###
+PUT http://localhost:8000/blocks/a/b/c
+Content-Type: application/json
+
+{
+  "a": 17
+}
+###
+PUT http://localhost:8000/blocks/
+Content-Type: text/plain
+
+Henri
+
+
+###
+PUT http://localhost:8000/blocks/a
+Content-Type: image/jpeg
+
+< img.png
+
+
+###
+GET http://localhost:8000/blocks/a
+
+
+###
+GET http://localhost:8000/blocks/a?format=raw
+
+###
+GET http://localhost:8000/blocks/a?raw

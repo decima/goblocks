@@ -84,10 +84,12 @@ func WithStatus(status int) Option {
 
 var Ok = WithStatus(http.StatusOK)
 var Created = WithStatus(http.StatusCreated)
+var Accepted = WithStatus(http.StatusAccepted)
 var NoContent = WithStatus(http.StatusNoContent)
 var NotFound = WithStatus(http.StatusNotFound)
 var Forbidden = WithStatus(http.StatusForbidden)
 var Unauthorized = WithStatus(http.StatusUnauthorized)
+var Unprocessable = WithStatus(http.StatusUnprocessableEntity)
 var AsJson = WithHeader("Content-Type", "application/json")
 
 func WithHeader(h string, v string) Option {
