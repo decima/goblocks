@@ -37,10 +37,10 @@ func newResponse(content any) *response {
 }
 
 func (resp *response) write(w http.ResponseWriter) error {
-	w.WriteHeader(resp.status)
 	for k, v := range resp.headers {
 		w.Header().Set(k, v)
 	}
+	w.WriteHeader(resp.status)
 
 	_, err := fmt.Fprint(w, resp.content)
 	return err

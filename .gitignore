@@ -1,3 +1,34 @@
+# Data directory
 data/
+
+# Configuration
 goblocks.yaml
+
+# IDE
 .idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Build artifacts
+bin/
+goblocks
+goblocks-*
+*.exe
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Go
+*.test
+*.prof
+
+# Temporary files
+*.tmp
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

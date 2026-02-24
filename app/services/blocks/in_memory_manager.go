@@ -47,12 +47,19 @@ func (i *InMemoryBlockManager) Set(p string, content []byte, contentType string)
 		Type:    contentType,
 		Size:    int64(len(content)),
 	})
-	for {
-		p = path.Dir(p)
-		if p == "." {
-			break
+
+	// Create parent directories
+	parent := path.Dir(p)
+	for parent != "." && parent != "/" {
+		// Only create parent if it doesn't already exist
+		if _, exists := i.blocks.Load(parent); !exists {
+			i.blocks.Store(parent, Block{
+				Path: parent,
+				Type: "directory",
+				Size: 0,
+			})
 		}
-		i.blocks.Store(p, nil)
+		parent = path.Dir(parent)
 	}
 
 	return nil
@@ -64,11 +71,7 @@ func (i *InMemoryBlockManager) Delete(path string) error {
 }
 
 func NewInMemoryBlockManager() *InMemoryBlockManager {
-	t := &InMemoryBlockManager{
+	return &InMemoryBlockManager{
 		blocks: sync.Map{},
 	}
-
-	t.blocks.Store("a/b/c", Block{Path: "a/b/c"})
-
-	return t
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -39,7 +40,10 @@ func (f *FsBlockManager) Get(path string, withContent bool) (Block, error) {
 	content := make([]byte, stat.Size())
 	_, err = file.Read(content)
 	if err != nil {
-		return Block{}, errors.Join(err, ErrForbidden)
+		if errors.Is(err, os.ErrPermission) {
+			return Block{}, errors.Join(err, ErrForbidden)
+		}
+		return Block{}, errors.Join(err, ErrUnknown)
 	}
 
 	var fileContent = FileContent{}
@@ -79,7 +83,7 @@ func (f *FsBlockManager) Set(path string, content []byte, contentType string) er
 	if err != nil {
 		return errors.Join(err, ErrUnknown)
 	}
-	err = os.WriteFile(f.getAbsoluteFilePath(path), jsonContent, 0755)
+	err = os.WriteFile(f.getAbsoluteFilePath(path), jsonContent, 0644)
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
 			return errors.Join(err, ErrForbidden)
@@ -130,10 +134,10 @@ func (f *FsBlockManager) List(path string) ([]BlockReference, error) {
 }
 
 func (f *FsBlockManager) getAbsolutePath(path string) string {
-	return f.baseDir + path
+	return filepath.Join(f.baseDir, path)
 }
 func (f *FsBlockManager) getAbsoluteFilePath(path string) string {
-	return f.baseDir + path + "/" + FsFileName
+	return filepath.Join(f.baseDir, path, FsFileName)
 }
 
 type FileContent struct {

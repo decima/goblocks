@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"goblocks/app/config"
 	"goblocks/app/services/blocks"
 	"io"
 	"net/http"
@@ -23,6 +24,11 @@ func NewGetBlockController(blockManager blocks.BlockManager) *GetBlockController
 
 func (c *GetBlockController) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.PathValue("path")
+	path, err := blocks.ValidatePath(path)
+	if err != nil {
+		c.Error(w, err.Error(), blockErrorToStatus(err))
+		return
+	}
 	raw := r.URL.Query().Has("raw") || r.URL.Query().Get("format") == "raw"
 	block, err := c.blockManager.Get(path, raw)
 	status := Ok
@@ -49,18 +55,29 @@ func (c *GetBlockController) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type WriteBlockController struct {
 	*BaseController
 	blockManager blocks.BlockManager
+	config       *config.Config
 }
 
-func NewWriteBlockController(blockManager blocks.BlockManager) *WriteBlockController {
+func NewWriteBlockController(blockManager blocks.BlockManager, cfg *config.Config) *WriteBlockController {
 	return &WriteBlockController{
 		NewBaseRoute("PUT /blocks/{path...}"),
 		blockManager,
+		cfg,
 	}
 }
 
 func (c *WriteBlockController) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.PathValue("path")
+	path, err := blocks.ValidatePath(path)
+	if err != nil {
+		c.Error(w, err.Error(), blockErrorToStatus(err))
+		return
+	}
+
+	// Limit request body size
+	r.Body = http.MaxBytesReader(w, r.Body, c.config.Http.MaxUploadSize)
 	defer r.Body.Close()
+
 	content, err := io.ReadAll(r.Body)
 	if err != nil {
 		c.Error(w, err.Error(), blockErrorToStatus(err))
@@ -69,6 +86,11 @@ func (c *WriteBlockController) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "" {
 		contentType = "application/octet-stream"
+	}
+	err = blocks.ValidateContentType(contentType)
+	if err != nil {
+		c.Error(w, err.Error(), blockErrorToStatus(err))
+		return
 	}
 	err = c.blockManager.Set(path, content, contentType)
 	if err != nil {
@@ -98,7 +120,12 @@ func NewDeleteBlockController(blockManager blocks.BlockManager) *DeleteBlockCont
 
 func (c *DeleteBlockController) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.PathValue("path")
-	err := c.blockManager.Delete(path)
+	path, err := blocks.ValidatePath(path)
+	if err != nil {
+		c.Error(w, err.Error(), blockErrorToStatus(err))
+		return
+	}
+	err = c.blockManager.Delete(path)
 	if err != nil {
 		c.Error(w, err.Error(), blockErrorToStatus(err))
 		return
@@ -111,6 +138,8 @@ func blockErrorToStatus(err error) Option {
 	if errors.Is(err, blocks.ErrNotFound) {
 		return NotFound
 	} else if errors.Is(err, blocks.ErrForbidden) {
+		return Forbidden
+	} else if errors.Is(err, blocks.ErrInvalidPath) || errors.Is(err, blocks.ErrPathTooDeep) || errors.Is(err, blocks.ErrInvalidContentType) {
 		return Forbidden
 	} else {
 		fmt.Println(err.Error())

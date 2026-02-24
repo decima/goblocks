@@ -19,12 +19,14 @@ type Config struct {
 func defaultConfig() {
 	viper.SetDefault("http.host", "0.0.0.0")
 	viper.SetDefault("http.port", 8000)
+	viper.SetDefault("http.max_upload_size", 10*1024*1024) // 10MB default
 	viper.SetDefault("blocks.storage.type", Fs)
 }
 
 type Http struct {
-	Host string
-	Port int
+	Host          string
+	Port          int
+	MaxUploadSize int64 `mapstructure:"max_upload_size"`
 }
 
 type Blocks struct {
@@ -65,12 +67,12 @@ func loadConfig() *Config {
 
 	viper.AutomaticEnv()
 
-	C := &Config{}
-	err = viper.Unmarshal(C)
+	cfg := &Config{}
+	err = viper.Unmarshal(cfg)
 	if err != nil {
 		panic("unable to decode into struct," + err.Error())
 	}
 
-	return C
+	return cfg
 
 }
